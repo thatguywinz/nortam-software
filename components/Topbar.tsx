@@ -1,12 +1,19 @@
-"use client";
-
 import { Bell, ChevronDown, Search, ShieldCheck } from "lucide-react";
-import { useAssure } from "@/lib/store";
-import RoleSwitcher from "./RoleSwitcher";
+import type { UserRole } from "@/lib/enums";
+import { UserRole as Role } from "@/lib/enums";
+import LogoutButton from "./LogoutButton";
 
-export default function Topbar() {
-  const { role } = useAssure();
-
+export default function Topbar({
+  role,
+  userName,
+  userEmail,
+  workspace,
+}: {
+  role: UserRole;
+  userName: string;
+  userEmail: string;
+  workspace: string;
+}) {
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border bg-white/95 px-6 backdrop-blur">
       <div className="flex flex-1 items-center gap-3">
@@ -14,8 +21,8 @@ export default function Topbar() {
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
           <input
             type="text"
-            placeholder={
-              role === "client"
+          placeholder={
+              role === Role.CLIENT
                 ? "Search requests, documents, certificates…"
                 : "Search queue, clients, reviewers, audit IDs…"
             }
@@ -27,7 +34,7 @@ export default function Topbar() {
           className="hidden items-center gap-2 rounded-lg border border-border bg-white px-3 py-2 text-xs text-ink-muted hover:text-ink md:inline-flex"
         >
           <span className="font-medium text-ink">
-            {role === "client" ? "MapleBank Legal" : "Nortam Review Ops"}
+            {workspace}
           </span>
           <ChevronDown className="h-3.5 w-3.5" />
         </button>
@@ -47,21 +54,19 @@ export default function Topbar() {
         <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-brand-amber ring-2 ring-white" />
       </button>
 
-      <RoleSwitcher />
+      <LogoutButton />
 
       <div className="flex items-center gap-2.5">
         <div className="hidden text-right text-xs leading-tight md:block">
-          <div className="font-medium text-ink">
-            {role === "client" ? "Isabelle Tremblay" : "Priya Shah"}
-          </div>
-          <div className="text-ink-muted">
-            {role === "client"
-              ? "Senior Counsel · MapleBank"
-              : "Final Approver · Nortam"}
-          </div>
+          <div className="font-medium text-ink">{userName}</div>
+          <div className="text-ink-muted">{userEmail}</div>
         </div>
         <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-brand-blue to-brand-green text-xs font-semibold text-white ring-2 ring-white">
-          {role === "client" ? "IT" : "PS"}
+          {userName
+            .split(" ")
+            .map((part) => part[0])
+            .join("")
+            .slice(0, 2)}
         </div>
       </div>
     </header>

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { AssureProvider } from "@/lib/store";
 
 export const metadata: Metadata = {
   title: "Nortam Assure — AI speed. Human judgment. Certified trust.",
@@ -31,7 +30,7 @@ export default function RootLayout({
         />
       </head>
       <body className="font-sans antialiased">
-        <AssureProvider>{children}</AssureProvider>
+        {children}
       </body>
     </html>
   );

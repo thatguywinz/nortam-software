@@ -1,57 +1,50 @@
 "use client";
 
-import { useState } from "react";
 import { motion } from "framer-motion";
 import {
   Activity,
   Award,
-  BarChart3,
-  Bell,
-  Bookmark,
-  ClipboardCheck,
   ClipboardList,
   Command,
-  FileCheck2,
   FileText,
   Files,
   Gauge,
   Inbox,
   LayoutDashboard,
-  MessageSquare,
+  ScrollText,
   Send,
-  Settings,
   ShieldAlert,
   ShieldCheck,
-  Sparkles,
-  Workflow,
 } from "lucide-react";
-import { useAssure } from "@/lib/store";
+import Link from "next/link";
+import { usePathname, useSearchParams } from "next/navigation";
+import { UserRole } from "@/lib/enums";
 import { cn } from "@/lib/utils";
 
-type NavItem = { label: string; icon: React.ComponentType<{ className?: string }>; key: string };
+type NavItem = {
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  base: string;
+  view?: string;
+};
 
 const clientNav: NavItem[] = [
-  { label: "Overview", icon: LayoutDashboard, key: "overview" },
-  { label: "New Request", icon: Send, key: "new" },
-  { label: "My Documents", icon: Files, key: "docs" },
-  { label: "Project Status", icon: Activity, key: "status" },
-  { label: "Approvals", icon: ClipboardCheck, key: "approvals" },
-  { label: "Certificates", icon: Award, key: "certs" },
-  { label: "Messages", icon: MessageSquare, key: "messages" },
-  { label: "Account Settings", icon: Settings, key: "settings" },
+  { label: "Overview", icon: LayoutDashboard, base: "/client", view: "overview" },
+  { label: "New Request", icon: Send, base: "/client", view: "new" },
+  { label: "My Documents", icon: Files, base: "/client", view: "documents" },
+  { label: "Certificates", icon: Award, base: "/client", view: "certificates" },
+  { label: "Activity", icon: Activity, base: "/client", view: "activity" },
 ];
 
 const employeeNav: NavItem[] = [
-  { label: "Command Center", icon: Command, key: "command" },
-  { label: "Incoming Requests", icon: Inbox, key: "incoming" },
-  { label: "Risk Queue", icon: ShieldAlert, key: "risk" },
-  { label: "AI Drafts", icon: Sparkles, key: "drafts" },
-  { label: "Human Review", icon: ClipboardList, key: "review" },
-  { label: "Terminology", icon: Bookmark, key: "terminology" },
-  { label: "Compliance", icon: ShieldCheck, key: "compliance" },
-  { label: "Audit Trail", icon: FileText, key: "audit" },
-  { label: "Certificates", icon: FileCheck2, key: "certs" },
-  { label: "Client Portal View", icon: Workflow, key: "client-preview" },
+  { label: "Command Center", icon: Command, base: "/employee", view: "overview" },
+  { label: "Incoming Requests", icon: Inbox, base: "/employee", view: "queue" },
+  { label: "Human Review", icon: ClipboardList, base: "/employee", view: "review" },
+  { label: "Risk Intelligence", icon: ShieldAlert, base: "/employee", view: "risk" },
+  { label: "Terminology", icon: ShieldCheck, base: "/employee", view: "terminology" },
+  { label: "Certificates", icon: Award, base: "/employee", view: "certificate" },
+  { label: "Audit Trail", icon: ScrollText, base: "/employee", view: "audit" },
+  { label: "Client Portal View", icon: FileText, base: "/client" },
 ];
 
 function NortamMark({ className = "h-7 w-7" }: { className?: string }) {
@@ -76,10 +69,26 @@ function NortamMark({ className = "h-7 w-7" }: { className?: string }) {
   );
 }
 
-export default function Sidebar() {
-  const { role } = useAssure();
-  const items = role === "client" ? clientNav : employeeNav;
-  const [active, setActive] = useState(items[0].key);
+export default function Sidebar({
+  role,
+  workspace,
+}: {
+  role: UserRole;
+  workspace: string;
+}) {
+  const pathname = usePathname();
+  const params = useSearchParams();
+  const items = role === UserRole.CLIENT ? clientNav : employeeNav;
+  const currentView = params.get("view") ?? "overview";
+
+  const hrefFor = (item: NavItem) =>
+    item.view ? `${item.base}?view=${item.view}` : item.base;
+
+  const isActiveItem = (item: NavItem) => {
+    if (!pathname.startsWith(item.base)) return false;
+    if (!item.view) return false;
+    return currentView === item.view;
+  };
 
   return (
     <aside className="hidden w-[260px] shrink-0 flex-col border-r border-white/5 bg-shell-900 text-white/85 lg:flex">
@@ -90,7 +99,7 @@ export default function Sidebar() {
             Nortam <span className="text-brand-gold">Assure</span>
           </div>
           <div className="text-[10px] uppercase tracking-[0.18em] text-white/45">
-            {role === "client" ? "Client Workspace" : "Review Operations"}
+            {role === UserRole.CLIENT ? "Client Workspace" : "Review Operations"}
           </div>
         </div>
       </div>
@@ -101,7 +110,7 @@ export default function Sidebar() {
             Workspace
           </div>
           <div className="mt-0.5 truncate text-sm text-white/90">
-            {role === "client" ? "MapleBank Legal" : "Nortam Review Operations"}
+            {workspace}
           </div>
         </div>
       </div>
@@ -110,12 +119,12 @@ export default function Sidebar() {
         <ul className="space-y-0.5">
           {items.map((item) => {
             const Icon = item.icon;
-            const isActive = active === item.key;
+            const isActive = isActiveItem(item);
             return (
-              <li key={item.key}>
-                <button
-                  type="button"
-                  onClick={() => setActive(item.key)}
+              <li key={item.label}>
+                <Link
+                  href={hrefFor(item)}
+                  scroll={false}
                   className={cn(
                     "relative flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition",
                     isActive
@@ -134,7 +143,7 @@ export default function Sidebar() {
                     <Icon className="h-3.5 w-3.5" />
                   </span>
                   <span className="relative">{item.label}</span>
-                </button>
+                </Link>
               </li>
             );
           })}
@@ -143,17 +152,17 @@ export default function Sidebar() {
 
       <div className="m-3 rounded-xl border border-white/5 bg-white/[0.03] p-3">
         <div className="flex items-center gap-2 text-[11px] text-white/55">
-          {role === "client" ? (
+          {role === UserRole.CLIENT ? (
             <ShieldCheck className="h-3.5 w-3.5 text-brand-green" />
           ) : (
             <Gauge className="h-3.5 w-3.5 text-brand-gold" />
           )}
           <span className="uppercase tracking-[0.18em]">
-            {role === "client" ? "Secure Client Portal" : "Nortam Internal"}
+            {role === UserRole.CLIENT ? "Secure Client Portal" : "Nortam Internal"}
           </span>
         </div>
         <div className="mt-1 text-[12px] leading-relaxed text-white/55">
-          {role === "client"
+          {role === UserRole.CLIENT
             ? "Encrypted document workspace"
             : "Human-verified workflow"}
         </div>

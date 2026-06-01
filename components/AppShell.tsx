@@ -1,33 +1,32 @@
-"use client";
-
-import { AnimatePresence, motion } from "framer-motion";
-import { useAssure } from "@/lib/store";
+import type { UserRole } from "@/lib/enums";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
-import ClientPortal from "./client/ClientPortal";
-import EmployeeWorkspace from "./employee/EmployeeWorkspace";
 
-export default function AppShell() {
-  const { role } = useAssure();
-  if (!role) return null;
-
+export default function AppShell({
+  role,
+  userName,
+  userEmail,
+  workspace,
+  children,
+}: {
+  role: UserRole;
+  userName: string;
+  userEmail: string;
+  workspace: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="flex min-h-screen w-full text-ink">
-      <Sidebar />
+      <Sidebar role={role} workspace={workspace} />
       <div className="flex min-h-screen flex-1 flex-col bg-panel">
-        <Topbar />
+        <Topbar
+          role={role}
+          userName={userName}
+          userEmail={userEmail}
+          workspace={workspace}
+        />
         <div className="flex-1 overflow-y-auto scrollbar-thin">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={role}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            >
-              {role === "client" ? <ClientPortal /> : <EmployeeWorkspace />}
-            </motion.div>
-          </AnimatePresence>
+          {children}
         </div>
       </div>
     </div>

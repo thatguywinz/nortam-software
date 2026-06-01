@@ -1,0 +1,196 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String               @id @default(cuid())
+  email           String               @unique
+  passwordHash    String
+  name            String
+  role            String
+  organizationId  String?
+  organization    Organization?        @relation(fields: [organizationId], references: [id])
+  memberships     Membership[]
+  createdRequests TranslationRequest[] @relation("RequestCreator")
+  auditEvents     AuditEvent[]
+  messages        Message[]
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+}
+
+model Organization {
+  id          String               @id @default(cuid())
+  name        String
+  type        String
+  users       User[]
+  memberships Membership[]
+  requests    TranslationRequest[]
+  terminology TerminologyTerm[]
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+}
+
+model Membership {
+  id             String       @id @default(cuid())
+  userId         String
+  organizationId String
+  roleLabel      String
+  user           User         @relation(fields: [userId], references: [id])
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime     @default(now())
+}
+
+model TranslationRequest {
+  id                   String               @id @default(cuid())
+  requestCode          String               @unique
+  title                String
+  organizationId       String
+  organization         Organization         @relation(fields: [organizationId], references: [id])
+  documentType         String
+  industry             String
+  sourceLanguage       String
+  targetLanguage       String
+  deadline             DateTime?
+  confidentialityLevel String
+  riskExpectation      String
+  requiredReviewLevel  String
+  specialInstructions  String?
+  status               String               @default("SUBMITTED")
+  currentStage         String               @default("SUBMITTED")
+  riskLevel            String?
+  riskScore            Int?
+  aiConfidence         Int?
+  certificateStatus    String               @default("LOCKED")
+  finalApprovedAt      DateTime?
+  finalApprovedBy      String?
+  legalReviewAt        DateTime?
+  legalReviewBy        String?
+  createdById          String
+  createdBy            User                 @relation("RequestCreator", fields: [createdById], references: [id])
+  uploadedAssets       DocumentAsset[]
+  versions             TranslationVersion[]
+  riskAssessment       RiskAssessment?
+  complianceChecks     ComplianceCheck[]
+  assignments          ReviewAssignment[]
+  auditEvents          AuditEvent[]
+  certificate          Certificate?
+  messages             Message[]
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+}
+
+model DocumentAsset {
+  id            String             @id @default(cuid())
+  requestId     String
+  request       TranslationRequest @relation(fields: [requestId], references: [id])
+  fileName      String
+  filePath      String
+  fileType      String
+  fileSize      Int
+  extractedText String?
+  uploadedAt    DateTime           @default(now())
+}
+
+model TranslationVersion {
+  id        String             @id @default(cuid())
+  requestId String
+  request   TranslationRequest @relation(fields: [requestId], references: [id])
+  type      String
+  content   String
+  language  String
+  createdBy String
+  notes     String?
+  createdAt DateTime           @default(now())
+}
+
+model RiskAssessment {
+  id                       String             @id @default(cuid())
+  requestId                String             @unique
+  request                  TranslationRequest @relation(fields: [requestId], references: [id])
+  totalScore               Int
+  riskLevel                String
+  legalSensitivity         Int
+  industryRegulation       Int
+  brandConfidentialityRisk Int
+  culturalNuance           Int
+  aiConfidenceGap          Int
+  flagsJson                String
+  explanation              String
+  createdAt                DateTime           @default(now())
+  updatedAt                DateTime           @updatedAt
+}
+
+model TerminologyTerm {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  sourceTerm     String
+  approvedTerm   String
+  targetLanguage String
+  notes          String?
+  createdAt      DateTime     @default(now())
+}
+
+model ComplianceCheck {
+  id             String             @id @default(cuid())
+  requestId      String
+  request        TranslationRequest @relation(fields: [requestId], references: [id])
+  status         String
+  conflictsJson  String
+  prohibitedJson String
+  summary        String
+  createdAt      DateTime           @default(now())
+}
+
+model ReviewAssignment {
+  id           String             @id @default(cuid())
+  requestId    String
+  request      TranslationRequest @relation(fields: [requestId], references: [id])
+  reviewerName String
+  reviewerRole String
+  status       String
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+}
+
+model AuditEvent {
+  id           String              @id @default(cuid())
+  requestId    String?
+  request      TranslationRequest? @relation(fields: [requestId], references: [id])
+  userId       String?
+  user         User?               @relation(fields: [userId], references: [id])
+  actor        String
+  action       String
+  status       String
+  metadataJson String?
+  createdAt    DateTime            @default(now())
+}
+
+model Certificate {
+  id              String             @id @default(cuid())
+  certificateCode String             @unique
+  requestId        String             @unique
+  request          TranslationRequest @relation(fields: [requestId], references: [id])
+  status           String
+  issuedAt         DateTime?
+  issuedBy         String?
+  auditTrailId     String
+  certificateJson  String
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+}
+
+model Message {
+  id        String             @id @default(cuid())
+  requestId String
+  request   TranslationRequest @relation(fields: [requestId], references: [id])
+  userId    String
+  user      User               @relation(fields: [userId], references: [id])
+  body      String
+  createdAt DateTime           @default(now())
+}

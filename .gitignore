@@ -3,7 +3,19 @@ node_modules
 out
 dist
 .env*
+!.env.example
 .DS_Store
 *.log
+tsconfig.tsbuildinfo
 .vscode
 .idea
+generated/prisma
+storage/uploads
+
+# Local SQLite database (recreate with `npx prisma db push && npx prisma db seed`)
+prisma/dev.db
+prisma/dev.db-journal
+*.db
+
+/generated/prisma
+.vercel
