@@ -19,3 +19,5 @@ prisma/dev.db-journal
 
 /generated/prisma
 .vercel
+
+.vercel

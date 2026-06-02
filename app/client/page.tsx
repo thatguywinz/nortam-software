@@ -6,6 +6,10 @@ import { prisma } from "@/lib/prisma";
 import { requestInclude } from "@/lib/requestQueries";
 import { toRequestView } from "@/lib/viewModels";
 
+// Authenticated, database-backed page — always render per request (never
+// statically prerendered at build time, where no database is configured).
+export const dynamic = "force-dynamic";
+
 export default async function ClientPage() {
   const user = await requireClient();
   const organizationId =

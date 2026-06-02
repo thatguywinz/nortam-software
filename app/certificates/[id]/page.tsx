@@ -8,6 +8,8 @@ import { prisma } from "@/lib/prisma";
 import { requestInclude } from "@/lib/requestQueries";
 import { toRequestView } from "@/lib/viewModels";
 
+export const dynamic = "force-dynamic";
+
 export default async function CertificatePage({
   params,
 }: {

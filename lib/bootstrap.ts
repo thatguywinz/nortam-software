@@ -17,6 +17,11 @@ let bootstrapPromise: Promise<void> | null = null;
  * Call this before the first query in any server entry point (auth, pages).
  */
 export function ensureDatabaseReady(): Promise<void> {
+  // Never touch the database during the production build (static analysis /
+  // prerendering). It only runs at request time, where env + DB are available.
+  if (process.env.NEXT_PHASE === "phase-production-build") {
+    return Promise.resolve();
+  }
   if (!bootstrapPromise) {
     bootstrapPromise = bootstrap().catch((error) => {
       bootstrapPromise = null;
