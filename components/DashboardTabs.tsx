@@ -38,7 +38,10 @@ export default function DashboardTabs({
       <div className="mx-auto max-w-7xl">
         {header}
 
-        <div className="sticky top-16 z-20 -mx-6 mb-6 border-b border-border bg-panel/80 px-6 py-2 backdrop-blur lg:-mx-10 lg:px-10">
+        {/* Navigation lives in the left Sidebar on desktop. This in-page tab
+            strip only appears on small screens, where the Sidebar is hidden —
+            so there is exactly one navigation control per screen size. */}
+        <div className="sticky top-16 z-20 -mx-6 mb-6 border-b border-border bg-panel/80 px-6 py-2 backdrop-blur lg:hidden">
           <div className="flex flex-wrap gap-1">
             {sections.map((section) => {
               const isActive = section.key === active.key;
