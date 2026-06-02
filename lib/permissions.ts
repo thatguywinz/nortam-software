@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth/next";
 import { redirect } from "next/navigation";
 import { UserRole } from "@/lib/enums";
 import { authOptions } from "@/lib/auth";
+import { ensureDatabaseReady } from "@/lib/bootstrap";
 import { prisma } from "@/lib/prisma";
 
 export async function getSessionUser() {
@@ -10,6 +11,8 @@ export async function getSessionUser() {
 }
 
 export async function requireSession() {
+  // Guarantee the database is provisioned before any protected page queries.
+  await ensureDatabaseReady();
   const user = await getSessionUser();
   if (!user?.id) redirect("/login");
   return user;

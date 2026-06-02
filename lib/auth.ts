@@ -3,6 +3,7 @@ import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { z } from "zod";
 import type { UserRole } from "@/lib/enums";
+import { ensureDatabaseReady } from "@/lib/bootstrap";
 import { prisma } from "@/lib/prisma";
 
 const credentialsSchema = z.object({
@@ -27,6 +28,9 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         const parsed = credentialsSchema.safeParse(credentials);
         if (!parsed.success) return null;
+
+        // Self-provision schema + demo data on first ever sign-in (production).
+        await ensureDatabaseReady();
 
         const user = await prisma.user.findUnique({
           where: { email: parsed.data.email.toLowerCase() },
