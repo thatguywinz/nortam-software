@@ -37,10 +37,12 @@ export async function generateAiDraft(input: DraftInput): Promise<DraftResult> {
   const provider = (process.env.AI_PROVIDER ?? "mock").toLowerCase();
   const hasAnthropic = Boolean(process.env.ANTHROPIC_API_KEY);
   const hasOpenAI = Boolean(process.env.OPENAI_API_KEY);
+  const hasGoogle = Boolean(process.env.GOOGLE_GENAI_API_KEY);
 
   const useAnthropic =
     provider === "anthropic" || (provider === "auto" && hasAnthropic);
   const useOpenAI = provider === "openai" || (provider === "auto" && hasOpenAI);
+  const useGoogle = provider === "google" || (provider === "auto" && hasGoogle);
 
   if (useAnthropic && hasAnthropic) {
     const result = await callAnthropic(input);
@@ -49,6 +51,11 @@ export async function generateAiDraft(input: DraftInput): Promise<DraftResult> {
 
   if (useOpenAI && hasOpenAI) {
     const result = await callOpenAI(input);
+    if (result) return result;
+  }
+
+  if (useGoogle && hasGoogle) {
+    const result = await callGoogle(input);
     if (result) return result;
   }
 
@@ -119,6 +126,52 @@ async function callOpenAI(input: DraftInput): Promise<DraftResult | null> {
         content: content.trim(),
         provider: "OpenAI",
         confidence: 90,
+      };
+    }
+  } catch {
+    // Fall through to local fallback.
+  }
+  return null;
+}
+
+async function callGoogle(input: DraftInput): Promise<DraftResult | null> {
+  try {
+    const apiKey = process.env.GOOGLE_GENAI_API_KEY;
+    const model = process.env.GOOGLE_MODEL ?? "gemini-2.0-flash";
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          system_instruction: {
+            parts: {
+              text: SYSTEM_PROMPT,
+            },
+          },
+          contents: {
+            parts: {
+              text: buildPrompt(input),
+            },
+          },
+          generationConfig: {
+            temperature: 0.2,
+            maxOutputTokens: 2048,
+          },
+        }),
+      }
+    );
+
+    if (!response.ok) return null;
+    const json = await response.json();
+    const content = json?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (typeof content === "string" && content.trim()) {
+      return {
+        content: content.trim(),
+        provider: `Google ${model}`,
+        confidence: 92,
       };
     }
   } catch {
